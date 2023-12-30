@@ -1,0 +1,4 @@
+absl-py
+torch
+git+https://github.com/younik/breedgym
+wandb

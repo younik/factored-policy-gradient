@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 
 def evaluate_policy(env, policy, num_episodes):
@@ -9,8 +10,9 @@ def evaluate_policy(env, policy, num_episodes):
         done = False
         while not done:
             obs = np.asarray(obs)
-            actions = policy(obs)
-            obs, rew, ter, tru, _ = env.step(actions)
+            with torch.no_grad():
+                actions = policy(torch.from_numpy(obs))
+            obs, rew, ter, tru, _ = env.step(actions.numpy())
 
             assert np.all(ter == False)
             done = tru[0]

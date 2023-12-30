@@ -14,15 +14,16 @@ from evaluate_policy import evaluate_policy
 from functools import partial
 
 
-flags.DEFINE_float("lr", 1e-3, "Optimizer learning rate")
+flags.DEFINE_float("lr", 5e-4, "Optimizer learning rate")
 flags.DEFINE_integer("num_episodes", 100, "Number of episodes per epoch")
 flags.DEFINE_integer("num_epochs", 100, "Number of epochs")
 flags.DEFINE_integer("num_envs", 8, "Number of parallel environments")
 flags.DEFINE_integer("eval_freq", 5, "Frequency of evaluation (in epochs)")
 flags.DEFINE_integer("eval_episodes", 25, "Number of episodes for evaluation")
-flags.DEFINE_integer("individual_per_gen", 50, "Individual per generation in the breeding program")
-flags.DEFINE_integer("trials", 1, "Number of trials")
-flags.DEFINE_bool("factorize", True, "Whether to use factorized learning algorithm or not")
+flags.DEFINE_integer("individual_per_gen", 25, "Individual per generation in the breeding program")
+flags.DEFINE_integer("trials", 10, "Number of trials")
+flags.DEFINE_bool("factorize", False, "Whether to use factorized learning algorithm or not")
+flags.DEFINE_string("device", "auto", "Which device to use")
 
 
 def train_epoch(train_env, policy, action_std, optimizer, num_episodes, factorize):
@@ -43,12 +44,12 @@ def train_epoch(train_env, policy, action_std, optimizer, num_episodes, factoriz
         obs, _ = train_env.reset()
         for step_id in range(steps_per_ep):
             obs = np.asarray(obs)
-            action_mean = policy(torch.from_numpy(obs).to(policy.device))
+            action_mean = policy(torch.from_numpy(obs))
             matrix_std = torch.ones_like(action_mean) * action_std
             distribution = Normal(action_mean, matrix_std)
             actions = distribution.sample()
             log_prob = distribution.log_prob(actions)
-            obs, rew, ter, tru, infos = train_env.step(actions.numpy())
+            obs, rew, ter, tru, infos = train_env.step(actions.cpu().numpy())
             assert np.all(ter == False)
             done = step_id == steps_per_ep - 1
             assert np.all(done == tru)
@@ -130,7 +131,7 @@ def run_experiment(config):
 
     policy = PolicyNet()
     # check if you need logstd instead of std
-    action_std = nn.Parameter(torch.ones(1,), requires_grad=True)
+    action_std = nn.Parameter(torch.ones((1,), device="cuda"), requires_grad=True)
     optimizer = torch.optim.Adam(list(policy.parameters()) + [action_std], lr=config.lr)
 
     for i in range(config.num_epochs):
@@ -146,6 +147,8 @@ def run_experiment(config):
 
 def main(_):
     config = flags.FLAGS
+    if config.device == "auto":
+        config.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     for i in range(config.trials):
         run = wandb.init(
             name=f"trial-{i}",
@@ -158,7 +161,4 @@ def main(_):
 
 if __name__ == "__main__":
     app.run(main)
-
-
-    
 

@@ -21,6 +21,7 @@ class PolicyNet(nn.Module):  # Network adapted from https://github.com/younik/br
         # self.query_layer = nn.Linear(116, 32).to(self.device)
 
     def forward(self, x):
+        x = x.to(self.device)
         batch_pop = x.reshape(-1, x.shape[-2], x.shape[-1])
         batch_pop = batch_pop.permute(0, 2, 1)
         batch_pop = batch_pop.type(torch.float32)

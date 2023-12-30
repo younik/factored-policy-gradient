@@ -12,7 +12,7 @@ def evaluate_policy(env, policy, num_episodes):
             obs = np.asarray(obs)
             with torch.no_grad():
                 actions = policy(torch.from_numpy(obs))
-            obs, rew, ter, tru, _ = env.step(actions.numpy())
+            obs, rew, ter, tru, _ = env.step(actions.cpu().numpy())
 
             assert np.all(ter == False)
             done = tru[0]

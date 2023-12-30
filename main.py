@@ -147,12 +147,13 @@ def run_experiment(config):
 def main(_):
     config = flags.FLAGS
     for i in range(config.trials):
-        wandb.init(
+        run = wandb.init(
             name=f"trial-{i}",
             project="FactoredMDP",
             group=f"{'Factorized' if config.factorize else 'Standard'}-{config.individual_per_gen}"
         )
         run_experiment(config)
+        run.finish()
 
 
 if __name__ == "__main__":

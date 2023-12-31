@@ -131,7 +131,7 @@ def run_experiment(config):
 
     policy = PolicyNet()
     # check if you need logstd instead of std
-    action_std = nn.Parameter(torch.ones((1,), device="cuda"), requires_grad=True)
+    action_std = nn.Parameter(torch.ones((1,), device=config.device), requires_grad=True)
     optimizer = torch.optim.Adam(list(policy.parameters()) + [action_std], lr=config.lr)
 
     for i in range(config.num_epochs):
